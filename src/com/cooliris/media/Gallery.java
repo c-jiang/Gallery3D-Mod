@@ -29,7 +29,6 @@ import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.Message;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
@@ -37,8 +36,6 @@ import android.provider.MediaStore.Images;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.widget.Toast;
-
-import java.util.HashMap;
 
 public final class Gallery extends Activity {
     public static final String REVIEW_ACTION = "com.cooliris.media.action.REVIEW";
@@ -48,15 +45,9 @@ public final class Gallery extends Activity {
     private RenderView mRenderView = null;
     private GridLayer mGridLayer;
     private WakeLock mWakeLock;
-    private HashMap<String, Boolean> mAccountsEnabled = new HashMap<String, Boolean>();
     private boolean mDockSlideshow = false;
     private int mNumRetries;
     private boolean mImageManagerHasStorageAfterDelay = false;
-    private HandlerThread mPicasaAccountThread = new HandlerThread("PicasaAccountMonitor");
-    private Handler mPicasaHandler = null;
-
-    private static final int GET_PICASA_ACCOUNT_STATUS = 1;
-    private static final int UPDATE_PICASA_ACCOUNT_STATUS = 2;
 
     private static final int CHECK_STORAGE = 0;
     private static final int HANDLE_INTENT = 1;
@@ -118,25 +109,7 @@ public final class Gallery extends Activity {
                 mRenderView);
         mRenderView.setRootLayer(mGridLayer);
         setContentView(mRenderView);
-
-        mPicasaAccountThread.start();
-        mPicasaHandler = new Handler(mPicasaAccountThread.getLooper()) {
-
-            @Override
-            public void handleMessage(Message msg) {
-                switch (msg.what) {
-                    case GET_PICASA_ACCOUNT_STATUS:
-                        mAccountsEnabled = PicasaDataSource.getAccountStatus(Gallery.this);
-                        break;
-                    case UPDATE_PICASA_ACCOUNT_STATUS:
-                        updatePicasaAccountStatus();
-                        break;
-                }
-            }
-        };
-
         sendInitialMessage();
-
         Log.i(TAG, "onCreate");
     }
 
@@ -184,27 +157,7 @@ public final class Gallery extends Activity {
             mRenderView.onResume();
         }
         if (mApp.isPaused()) {
-            if (mPicasaHandler != null) {
-                mPicasaHandler.removeMessages(GET_PICASA_ACCOUNT_STATUS);
-                mPicasaHandler.sendEmptyMessage(UPDATE_PICASA_ACCOUNT_STATUS);
-            }
-            // Stop the thumbnailer
-            CacheService.startCache(this, false);
         	mApp.onResume();
-        }
-    }
-
-    void updatePicasaAccountStatus() {
-        // We check to see if the authenticated accounts have
-        // changed, if so, reload the datasource.
-
-        // TODO: This should be done in PicasaDataFeed
-        if (mGridLayer != null) {
-            HashMap<String, Boolean> accountsEnabled = PicasaDataSource.getAccountStatus(this);
-            if (!accountsEnabled.equals(mAccountsEnabled)) {
-                mGridLayer.setDataSource(mGridLayer.getDataSource());
-                mAccountsEnabled = accountsEnabled;
-            }
         }
     }
 
@@ -222,12 +175,6 @@ public final class Gallery extends Activity {
 
         LocalDataSource.sThumbnailCache.flush();
         LocalDataSource.sThumbnailCacheVideo.flush();
-        PicasaDataSource.sThumbnailCache.flush();
-
-        if (mPicasaHandler != null) {
-            mPicasaHandler.removeMessages(GET_PICASA_ACCOUNT_STATUS);
-            mPicasaHandler.removeMessages(UPDATE_PICASA_ACCOUNT_STATUS);
-        }
     	mApp.onPause();
     }
 
@@ -249,10 +196,6 @@ public final class Gallery extends Activity {
         // Remove any post messages.
         handler.removeMessages(CHECK_STORAGE);
         handler.removeMessages(HANDLE_INTENT);
-
-        mPicasaAccountThread.quit();
-        mPicasaAccountThread = null;
-        mPicasaHandler = null;
 
         if (mGridLayer != null) {
             DataSource dataSource = mGridLayer.getDataSource();
@@ -278,17 +221,7 @@ public final class Gallery extends Activity {
             mGridLayer.markDirty(30);
         }
         if (mRenderView != null) {
-            if (getResources().getBoolean(R.bool.reload_on_orientation_change)) {
-                // FILTHY, DIRTY, UGLY HACK.
-                mRenderView.unloadAllTextures();
-                mRenderView.shutdown();
-                mRenderView = new RenderView(this);
-                mRenderView.setRootLayer(mGridLayer);
-                setContentView(mRenderView);
-                mRenderView.onResume();
-            } else {
-                mRenderView.requestRender();
-            }
+            mRenderView.requestRender();
         }
         Log.i(TAG, "onConfigurationChanged");
     }
@@ -359,18 +292,12 @@ public final class Gallery extends Activity {
     private void initializeDataSource() {
         final boolean hasStorage = mImageManagerHasStorageAfterDelay;
         // Creating the DataSource objects.
-        final PicasaDataSource picasaDataSource = new PicasaDataSource(Gallery.this);
         final LocalDataSource localDataSource = new LocalDataSource(Gallery.this, LocalDataSource.URI_ALL_MEDIA, false);
-        final ConcatenatedDataSource combinedDataSource = new ConcatenatedDataSource(localDataSource, picasaDataSource);
 
         // Depending upon the intent, we assign the right dataSource.
         if (!isPickIntent() && !isViewIntent() && !isReviewIntent()) {
             localDataSource.setMimeFilter(true, true);
-            if (hasStorage) {
-                mGridLayer.setDataSource(combinedDataSource);
-            } else {
-                mGridLayer.setDataSource(picasaDataSource);
-            }
+            mGridLayer.setDataSource(localDataSource);
         } else if (isPickIntent()) {
             final Intent intent = getIntent();
             if (intent != null) {
@@ -383,11 +310,7 @@ public final class Gallery extends Activity {
                 boolean includeVideos = isVideoType(type);
                 localDataSource.setMimeFilter(includeImages, includeVideos);
                 if (includeImages) {
-                    if (hasStorage) {
-                        mGridLayer.setDataSource(combinedDataSource);
-                    } else {
-                        mGridLayer.setDataSource(picasaDataSource);
-                    }
+                    mGridLayer.setDataSource(localDataSource);
                 } else {
                     mGridLayer.setDataSource(localDataSource);
                 }
@@ -404,13 +327,7 @@ public final class Gallery extends Activity {
             // Display both image and video.
             singleDataSource.setMimeFilter(true, true);
 
-            if (hasStorage) {
-                ConcatenatedDataSource singleCombinedDataSource = new ConcatenatedDataSource(singleDataSource,
-                        picasaDataSource);
-                mGridLayer.setDataSource(singleCombinedDataSource);
-            } else {
-                mGridLayer.setDataSource(picasaDataSource);
-            }
+            mGridLayer.setDataSource(singleDataSource);
             mGridLayer.setViewIntent(true, Utils.getBucketNameFromUri(getContentResolver(), uri));
 
             if (isReviewIntent()) {
@@ -424,7 +341,5 @@ public final class Gallery extends Activity {
                 mGridLayer.startSlideshow();
             }
         }
-        // We record the set of enabled accounts for picasa.
-        mPicasaHandler.sendEmptyMessage(GET_PICASA_ACCOUNT_STATUS);
     }
 }

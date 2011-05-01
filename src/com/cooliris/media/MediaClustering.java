@@ -77,16 +77,14 @@ public final class MediaClustering {
 
     private ArrayList<Cluster> mClusters;
     private Cluster mCurrCluster;
-    private boolean mIsPicassaAlbum = false;
     private long mClusterSplitTime = (MIN_CLUSTER_SPLIT_TIME_IN_MS + MAX_CLUSTER_SPLIT_TIME_IN_MS) / 2;
     private long mLargeClusterSplitTime = mClusterSplitTime / PARTITION_CLUSTER_SPLIT_TIME_FACTOR;
     private int mMinClusterSize = (MIN_MIN_CLUSTER_SIZE + MAX_MIN_CLUSTER_SIZE) / 2;
     private int mMaxClusterSize = (MIN_MAX_CLUSTER_SIZE + MAX_MAX_CLUSTER_SIZE) / 2;
 
-    MediaClustering(boolean isPicassaAlbum) {
+    MediaClustering() {
         mClusters = new ArrayList<Cluster>();
-        mIsPicassaAlbum = isPicassaAlbum;
-        mCurrCluster = new Cluster(mIsPicassaAlbum);
+        mCurrCluster = new Cluster();
     }
 
     public void clear() {
@@ -166,7 +164,7 @@ public final class MediaClustering {
 
                 // Creating a new cluster and adding the current item to it.
                 if (!itemAddedToCurrentCluster) {
-                    mCurrCluster = new Cluster(mIsPicassaAlbum);
+                    mCurrCluster = new Cluster();
                     if (geographicallySeparateItem) {
                         mCurrCluster.mGeographicallySeparatedFromPrevCluster = true;
                     }
@@ -188,7 +186,7 @@ public final class MediaClustering {
             } else {
                 mClusters.add(mCurrCluster);
             }
-            mCurrCluster = new Cluster(mIsPicassaAlbum);
+            mCurrCluster = new Cluster();
         }
     }
 
@@ -197,12 +195,12 @@ public final class MediaClustering {
         int numCurrClusterItems = mCurrCluster.mNumItemsLoaded;
         int secondPartitionStartIndex = getPartitionIndexForCurrentCluster();
         if (secondPartitionStartIndex != -1) {
-            Cluster partitionedCluster = new Cluster(mIsPicassaAlbum);
+            Cluster partitionedCluster = new Cluster();
             for (int j = 0; j < secondPartitionStartIndex; j++) {
                 partitionedCluster.addItem(currClusterItems.get(j));
             }
             mClusters.add(partitionedCluster);
-            partitionedCluster = new Cluster(mIsPicassaAlbum);
+            partitionedCluster = new Cluster();
             for (int j = secondPartitionStartIndex; j < numCurrClusterItems; j++) {
                 partitionedCluster.addItem(currClusterItems.get(j));
             }
@@ -280,11 +278,9 @@ public final class MediaClustering {
     public static final class Cluster extends MediaSet {
         private boolean mGeographicallySeparatedFromPrevCluster = false;
         private boolean mClusterChanged = false;
-        private boolean mIsPicassaAlbum = false;
         private static final String MMDDYY_FORMAT = "MMddyy";
 
-        public Cluster(boolean isPicassaAlbum) {
-            mIsPicassaAlbum = isPicassaAlbum;
+        public Cluster() {
         }
 
         public void generateCaption(Context context) {
@@ -302,10 +298,6 @@ public final class MediaClustering {
                 }
 
                 if (minTimestamp != -1L) {
-                    if (mIsPicassaAlbum) {
-                        minTimestamp -= App.CURRENT_TIME_ZONE.getOffset(minTimestamp);
-                        maxTimestamp -= App.CURRENT_TIME_ZONE.getOffset(maxTimestamp);
-                    }
                     String minDay = DateFormat.format(MMDDYY_FORMAT, minTimestamp).toString();
                     String maxDay = DateFormat.format(MMDDYY_FORMAT, maxTimestamp).toString();
 

@@ -242,7 +242,6 @@ public class LocalDataSource implements DataSource {
             set.mId = id;
             set.setNumExpectedItems(2);
             set.generateTitle(true);
-            set.mPicasaAlbumId = Shared.INVALID;
             if (this.getThumbnailCache() != sThumbnailCache) {
                 loadOtherSets = false;
             }
@@ -254,7 +253,6 @@ public class LocalDataSource implements DataSource {
                 set.mId = getBucketId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI.toString() + "/" + set.mName);
                 set.setNumExpectedItems(1);
                 set.generateTitle(true);
-                set.mPicasaAlbumId = Shared.INVALID;
             } else {
                 CacheService.loadMediaSets(mContext, feed, this, mIncludeImages, mIncludeVideos, true);
             }

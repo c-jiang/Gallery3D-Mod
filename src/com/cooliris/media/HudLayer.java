@@ -225,7 +225,6 @@ public final class HudLayer extends Layer {
         int numBuckets = buckets.size();
         boolean albumMode = false;
         boolean singleItem = false;
-        boolean isPicasa = false;
         int mediaType = MediaItem.MEDIA_TYPE_IMAGE;
         if (numBuckets > 1) {
             albumMode = true;
@@ -236,7 +235,6 @@ public final class HudLayer extends Layer {
             if (mediaSet == null) {
                 return;
             }
-            isPicasa = mediaSet.mPicasaAlbumId != Shared.INVALID;
             if (bucket.mediaItems == null || bucket.mediaItems.size() == 0) {
                 albumMode = true;
             } else {
@@ -314,71 +312,39 @@ public final class HudLayer extends Layer {
                     }
                 }), };
 
-        if (isPicasa) {
-            optionImageMultiple = new Option[] {};
-        }
         Option[] optionImageSingle;
-        if (isPicasa) {
-            optionImageSingle = new Option[] { new PopupMenu.Option(mContext.getResources().getString(Res.string.set_as_wallpaper),
-                    mContext.getResources().getDrawable(Res.drawable.ic_menu_set_as), new Runnable() {
-                        public void run() {
-                            ArrayList<MediaBucket> buckets = mGridLayer.getSelectedBuckets();
-                            MediaItem item = MediaBucketList.getFirstItemSelection(buckets);
-                            if (item == null) {
-                                return;
-                            }
-                            mGridLayer.deselectAll();
-                            if (item.mParentMediaSet.mPicasaAlbumId != Shared.INVALID) {
-                                final Intent intent = new Intent("android.intent.action.ATTACH_DATA");
-                                intent.setClass(mContext, Photographs.class);
-                                intent.setData(Uri.parse(item.mContentUri));
-                                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                                ((Activity) mContext).startActivityForResult(intent, 0);
-                            }
+        optionImageSingle = new Option[] {
+                new PopupMenu.Option(mContext.getResources().getString(Res.string.set_as), mContext.getResources().getDrawable(
+                        Res.drawable.ic_menu_set_as), new Runnable() {
+                    public void run() {
+                        ArrayList<MediaBucket> buckets = mGridLayer.getSelectedBuckets();
+                        MediaItem item = MediaBucketList.getFirstItemSelection(buckets);
+                        if (item == null) {
+                            return;
                         }
-                    }) };
-        } else {
-            optionImageSingle = new Option[] {
-                    new PopupMenu.Option((isPicasa) ? mContext.getResources().getString(Res.string.set_as_wallpaper) : mContext
-                            .getResources().getString(Res.string.set_as), mContext.getResources().getDrawable(
-                            Res.drawable.ic_menu_set_as), new Runnable() {
-                        public void run() {
-                            ArrayList<MediaBucket> buckets = mGridLayer.getSelectedBuckets();
-                            MediaItem item = MediaBucketList.getFirstItemSelection(buckets);
-                            if (item == null) {
-                                return;
-                            }
-                            mGridLayer.deselectAll();
-                            if (item.mParentMediaSet.mPicasaAlbumId != Shared.INVALID) {
-                                final Intent intent = new Intent("android.intent.action.ATTACH_DATA");
-                                intent.setClass(mContext, Photographs.class);
-                                intent.setData(Uri.parse(item.mContentUri));
-                                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                                ((Activity) mContext).startActivityForResult(intent, 0);
-                            } else {
-                                Intent intent = Util.createSetAsIntent(Uri.parse(item.mContentUri), item.mMimeType);
-                                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                                ((Activity) mContext).startActivity(Intent.createChooser(intent, mContext
-                                        .getText(Res.string.set_image)));
-                            }
+                        mGridLayer.deselectAll();
+                        Intent intent = Util.createSetAsIntent(Uri.parse(item.mContentUri), item.mMimeType);
+                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        ((Activity) mContext).startActivity(Intent.createChooser(intent, mContext
+                                .getText(Res.string.set_image)));
+                    }
+                }),
+                new PopupMenu.Option(mContext.getResources().getString(Res.string.crop), mContext.getResources().getDrawable(
+                        Res.drawable.ic_menu_crop), new Runnable() {
+                    public void run() {
+                        ArrayList<MediaBucket> buckets = mGridLayer.getSelectedBuckets();
+                        MediaItem item = MediaBucketList.getFirstItemSelection(buckets);
+                        if (item == null) {
+                            return;
                         }
-                    }),
-                    new PopupMenu.Option(mContext.getResources().getString(Res.string.crop), mContext.getResources().getDrawable(
-                            Res.drawable.ic_menu_crop), new Runnable() {
-                        public void run() {
-                            ArrayList<MediaBucket> buckets = mGridLayer.getSelectedBuckets();
-                            MediaItem item = MediaBucketList.getFirstItemSelection(buckets);
-                            if (item == null) {
-                                return;
-                            }
-                            mGridLayer.deselectAll();
-                            final Intent intent = new Intent("com.android.camera.action.CROP");
-                            intent.setClass(mContext, CropImage.class);
-                            intent.setData(Uri.parse(item.mContentUri));
-                            ((Activity) mContext).startActivityForResult(intent, CropImage.CROP_MSG_INTERNAL);
-                        }
-                    }) };
-        }
+                        mGridLayer.deselectAll();
+                        final Intent intent = new Intent("com.android.camera.action.CROP");
+                        intent.setClass(mContext, CropImage.class);
+                        intent.setData(Uri.parse(item.mContentUri));
+                        ((Activity) mContext).startActivityForResult(intent, CropImage.CROP_MSG_INTERNAL);
+                    }
+                }) };
+
         Option[] options = optionAll;
         if (!albumMode) {
             if (!singleItem) {
@@ -709,14 +675,6 @@ public final class HudLayer extends Layer {
                     if (mimeType == null) {
                         mimeType = item.mMimeType;
                         mediaType = item.getMediaType();
-                        MediaSet parentMediaSet = item.mParentMediaSet;
-                        if (parentMediaSet != null && parentMediaSet.mPicasaAlbumId != Shared.INVALID) {
-                            // This will go away once http uri's are supported
-                            // for all media types.
-                            // This ensures that just the link is shared as a
-                            // text
-                            mimeType = "text/plain";
-                        }
                     }
                     // Ensure that the media type remains the same
                     if (mediaType != item.getMediaType()) {
@@ -801,7 +759,6 @@ public final class HudLayer extends Layer {
     }
 
     public void clear() {
-
     }
 
     public void enterSelectionMode() {
@@ -821,24 +778,6 @@ public final class HudLayer extends Layer {
             mSelectionMenuBottom.setMenus(mSingleViewIntentBottomMenu);
         } else {
             mSelectionMenuBottom.setMenus(mNormalBottomMenu);
-        }
-    }
-
-    public void computeBottomMenu() {
-        // we need to the same for picasa albums
-        ArrayList<MediaBucket> selection = mGridLayer.getSelectedBuckets();
-        Menu[] menus = mSelectionMenuBottom.getMenus();
-        if (menus == mSingleViewIntentBottomMenu)
-            return;
-        int numBuckets = selection.size();
-        for (int i = 0; i < numBuckets; ++i) {
-            MediaBucket bucket = selection.get(i);
-            if (bucket == null || bucket.mediaSet == null)
-                continue;
-            if (bucket.mediaSet.mPicasaAlbumId != Shared.INVALID) {
-                mSelectionMenuBottom.setMenus(mSingleViewIntentBottomMenu);
-                break;
-            }
         }
     }
 

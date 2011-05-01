@@ -17,8 +17,6 @@
 package com.cooliris.cache;
 
 import com.cooliris.media.LocalDataSource;
-import com.cooliris.media.PicasaDataSource;
-import com.cooliris.media.LocalDataSource;
 import com.cooliris.media.Utils;
 
 import android.content.BroadcastReceiver;
@@ -51,7 +49,6 @@ public class BootReceiver extends BroadcastReceiver {
         } else if (action.equals(Intent.ACTION_MEDIA_EJECT)) {
             LocalDataSource.sThumbnailCache.close();
             LocalDataSource.sThumbnailCacheVideo.close();
-            PicasaDataSource.sThumbnailCache.close();
             CacheService.sAlbumCache.close();
             CacheService.sMetaAlbumCache.close();
             CacheService.sSkipThumbnailIds.flush();

@@ -1206,7 +1206,6 @@ public final class GridLayer extends RootLayer implements MediaFeed.Listener, Ti
                     deselectAll();
             }
         }
-        mHud.computeBottomMenu();
     }
 
     private void updateCountOfSelectedItems() {
