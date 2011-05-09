@@ -71,7 +71,7 @@ public final class MediaItemTexture extends Texture {
             return false;
         }
         synchronized (cache) {
-            long id = parentMediaSet.mPicasaAlbumId == Shared.INVALID ? Utils.Crc64Long(item.mFilePath) : item.mId;
+            long id = Utils.Crc64Long(item.mFilePath);
             return cache.isDataAvailable(id, item.mDateModifiedInSec * 1000);
         }
     }
@@ -82,7 +82,7 @@ public final class MediaItemTexture extends Texture {
             return false;
         if (mItem.mParentMediaSet == null || mItem.mMimeType == null)
             return false;
-        if (mItem.mParentMediaSet.mPicasaAlbumId == Shared.INVALID && mItem.mMimeType.contains("video")) {
+        if (mItem.mMimeType.contains("video")) {
             return true;
         } else {
             return false;

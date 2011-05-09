@@ -230,7 +230,7 @@ public final class MediaFeed implements Runnable {
             if (item.mClusteringState == MediaItem.NOT_CLUSTERED) {
                 MediaClustering clustering = mClusterSets.get(mediaSet);
                 if (clustering == null) {
-                    clustering = new MediaClustering(mediaSet.isPicassaAlbum());
+                    clustering = new MediaClustering();
                     mClusterSets.put(mediaSet, clustering);
                 }
                 clustering.setTimeRange(mediaSet.mMaxTimestamp - mediaSet.mMinTimestamp, mediaSet.getNumExpectedItems());

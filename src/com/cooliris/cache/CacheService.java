@@ -268,7 +268,6 @@ public final class CacheService extends IntentService {
                         mediaSet.mName = name;
                         mediaSet.mHasImages = hasImages;
                         mediaSet.mHasVideos = hasVideos;
-                        mediaSet.mPicasaAlbumId = Shared.INVALID;
                         mediaSet.generateTitle(true);
                     }
                 }
@@ -303,7 +302,6 @@ public final class CacheService extends IntentService {
                     }
                     mediaSet.mName = Utils.readUTF(dis);
                     if (setId == bucketId) {
-                        mediaSet.mPicasaAlbumId = Shared.INVALID;
                         mediaSet.generateTitle(true);
                         return;
                     }

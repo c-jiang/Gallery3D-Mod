@@ -132,17 +132,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <provider android:label="Picasa Web Albums" android:name="com.cooliris.picasa.PicasaContentProvider"
-            android:grantUriPermissions="true"
-            android:syncable="true"
-            android:authorities="com.cooliris.picasa.contentprovider">
-        </provider>
-        <service android:label="Picasa Sync Service" android:name="com.cooliris.picasa.PicasaService">
-            <intent-filter>
-                <action android:name="android.content.SyncAdapter" />
-            </intent-filter>
-            <meta-data android:name="android.content.SyncAdapter" android:resource="@xml/syncadapter" />
-        </service>
 
         <service android:label="CacheService" android:name="com.cooliris.cache.CacheService"/>
 
@@ -187,11 +176,5 @@
         <activity android:name="com.cooliris.media.PhotoAppWidgetBind" android:exported="true"
                 android:theme="@android:style/Theme.NoDisplay"
                 android:permission="android.permission.BIND_APPWIDGET" />
-
-        <receiver android:name="com.cooliris.picasa.PicasaReceiver">
-                <intent-filter>
-                    <action android:name="android.accounts.LOGIN_ACCOUNTS_CHANGED_ACTION"/>
-                </intent-filter>
-        </receiver>
     </application>
 </manifest>

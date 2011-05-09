@@ -96,19 +96,11 @@ public final class DetailMode {
         if (selectedItemsSet.areTimestampsAvailable()) {
             long minTimestamp = selectedItemsSet.mMinTimestamp;
             long maxTimestamp = selectedItemsSet.mMaxTimestamp;
-            if (selectedItemsSet.isPicassaSet()) {
-                minTimestamp -= App.CURRENT_TIME_ZONE.getOffset(minTimestamp);
-                maxTimestamp -= App.CURRENT_TIME_ZONE.getOffset(maxTimestamp);
-            }
             strings.add(resources.getString(Res.string.start) + ": " + dateTimeFormat.format(new Date(minTimestamp)));
             strings.add(resources.getString(Res.string.end) + ": " + dateTimeFormat.format(new Date(maxTimestamp)));
         } else if (selectedItemsSet.areAddedTimestampsAvailable()) {
             long minTimestamp = selectedItemsSet.mMinAddedTimestamp;
             long maxTimestamp = selectedItemsSet.mMaxAddedTimestamp;
-            if (selectedItemsSet.isPicassaSet()) {
-                minTimestamp -= App.CURRENT_TIME_ZONE.getOffset(minTimestamp);
-                maxTimestamp -= App.CURRENT_TIME_ZONE.getOffset(maxTimestamp);
-            }
             strings.add(resources.getString(Res.string.start) + ": " + dateTimeFormat.format(new Date(minTimestamp)));
             strings.add(resources.getString(Res.string.end) + ": " + dateTimeFormat.format(new Date(maxTimestamp)));
         } else {
@@ -170,15 +162,9 @@ public final class DetailMode {
             strings[2] = resources.getString(Res.string.taken_on) + ": " + dateTimeFormat.format(item.mLocaltime);
         } else if (item.isDateTakenValid()) {
             long dateTaken = item.mDateTakenInMs;
-            if (item.isPicassaItem()) {
-                dateTaken -= App.CURRENT_TIME_ZONE.getOffset(dateTaken);
-            }
             strings[2] = resources.getString(Res.string.taken_on) + ": " + dateTimeFormat.format(new Date(dateTaken));
         } else if (item.isDateAddedValid()) {
             long dateAdded = item.mDateAddedInSec * 1000;
-            if (item.isPicassaItem()) {
-                dateAdded -= App.CURRENT_TIME_ZONE.getOffset(dateAdded);
-            }
             // TODO: Make this added_on as soon as translations are ready.
             // strings[2] = resources.getString(Res.string.added_on) + ": " +
             // DateFormat.format("h:mmaa MMM dd yyyy", dateAdded);

@@ -111,10 +111,6 @@ public final class MediaItem {
         return (mDateAddedInSec > MIN_VALID_DATE_IN_SEC && mDateAddedInSec < MAX_VALID_DATE_IN_SEC);
     }
 
-    public boolean isPicassaItem() {
-        return (mParentMediaSet != null && mParentMediaSet.isPicassaAlbum());
-    }
-
     private static final String VIDEO = "video/";
 
     public int getMediaType() {

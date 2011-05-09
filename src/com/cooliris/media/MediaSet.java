@@ -72,7 +72,6 @@ public class MediaSet {
     public String mNoCountTitleString;
 
     public String mEditUri = null;
-    public long mPicasaAlbumId = Shared.INVALID;
     public boolean mIsLocal = true;
 
     public DataSource mDataSource;
@@ -337,34 +336,6 @@ public class MediaSet {
      */
     public boolean areAddedTimestampsAvailable() {
         return (mMinAddedTimestamp < Long.MAX_VALUE && mMaxAddedTimestamp > 0);
-    }
-
-    /**
-     * @return true if this set of items corresponds to Picassa items.
-     */
-    public boolean isPicassaSet() {
-        // 2 cases:-
-        // 1. This set is just a Picassa Album, and all its items are therefore
-        // from Picassa.
-        // 2. This set is a random collection of items and each item is a
-        // Picassa item.
-        if (isPicassaAlbum()) {
-            return true;
-        }
-        int numItems = mItems.size();
-        for (int i = 0; i < numItems; i++) {
-            if (!mItems.get(i).isPicassaItem()) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
-     * @return true if this set is a Picassa album.
-     */
-    public boolean isPicassaAlbum() {
-        return (mPicasaAlbumId != Shared.INVALID);
     }
 
     public void refresh() {
