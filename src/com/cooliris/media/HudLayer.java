@@ -269,13 +269,18 @@ public final class HudLayer extends Layer {
                     if (strings == null) {
                         foundDataToDisplay = false;
                     } else {
-                        builder.setItems(strings, null);
+//                        builder.setItems(strings, null);
+                        StringBuilder sb = new StringBuilder();
+                        for (int i = 0; i < strings.length; ++i) {
+                            sb.append(strings[i] + "\n\n");
+                        }
+                        builder.setMessage(sb.toString().trim());
                     }
                 }
 
                 mGridLayer.deselectAll();
                 if (foundDataToDisplay) {
-                    builder.setNeutralButton(Res.string.details_ok, null);
+//                    builder.setNeutralButton(Res.string.details_ok, null);
                     App.get(mContext).getHandler().post(new Runnable() {
                         public void run() {
                             builder.show();
