@@ -140,8 +140,8 @@ public final class DetailMode {
         Resources resources = context.getResources();
         ArrayList<CharSequence> exifItems = new ArrayList<CharSequence>();
         
-        exifItems.add(resources.getString(Res.string.title) + ": " + item.mCaption);
-        exifItems.add(resources.getString(Res.string.type) + ": " + item.getDisplayMimeType());
+        exifItems.add("Title: " + item.mCaption);
+        exifItems.add("Type: " + item.getDisplayMimeType());
 
         DateFormat dateTimeFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT);
 
@@ -171,30 +171,30 @@ public final class DetailMode {
         }
         
         if (item.mLocaltime != null) {
-            exifItems.add(resources.getString(Res.string.taken_on) + ": " + dateTimeFormat.format(item.mLocaltime));
+            exifItems.add("Taken on: " + dateTimeFormat.format(item.mLocaltime));
         } else if (item.isDateTakenValid()) {
             long dateTaken = item.mDateTakenInMs;
-            exifItems.add(resources.getString(Res.string.taken_on) + ": " + dateTimeFormat.format(new Date(dateTaken)));
+            exifItems.add("Taken on: " + dateTimeFormat.format(new Date(dateTaken)));
         } else if (item.isDateAddedValid()) {
             long dateAdded = item.mDateAddedInSec * 1000;
             // TODO: Make this added_on as soon as translations are ready.
             // strings[2] = resources.getString(Res.string.added_on) + ": " +
             // DateFormat.format("h:mmaa MMM dd yyyy", dateAdded);
-            exifItems.add(resources.getString(Res.string.taken_on) + ": " + dateTimeFormat.format(new Date(dateAdded)));
+            exifItems.add("Taken on: " + dateTimeFormat.format(new Date(dateAdded)));
         } else {
-            exifItems.add(resources.getString(Res.string.taken_on) + ": " + resources.getString(Res.string.date_unknown));
+            exifItems.add("Taken on: Date unknown");
         }
         MediaSet parentMediaSet = item.mParentMediaSet;
         if (parentMediaSet == null) {
-            exifItems.add(resources.getString(Res.string.album) + ":");
+            exifItems.add("Album:");
         } else {
-            exifItems.add(resources.getString(Res.string.album) + ": " + parentMediaSet.mName);
+            exifItems.add("Album: " + parentMediaSet.mName);
         }
         
         ReverseGeocoder reverseGeocoder = App.get(context).getReverseGeocoder();
         String locationString = item.getReverseGeocodedLocation(reverseGeocoder);
         if (locationString != null && locationString.length() > 0) {
-            exifItems.add(resources.getString(Res.string.location) + ": " + locationString);
+            exifItems.add("Location: " + locationString);
         }
 
         File jpegFile = new File(item.mFilePath);
