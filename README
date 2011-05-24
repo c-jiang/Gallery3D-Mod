@@ -1,0 +1,18 @@
+Gallery3D-Mod - Android Application Gallery3D Modified Version
+
+To obtain the latest version of Gallery3D-Mod, please check out:
+- https://github.com/c-jiang/Gallery3D-Mod
+
+Gallery3D-Mod is a modified Android application derived from CyanogenMod's
+Gallery3D. The main task is aimed at sufficient EXIF information support and
+applicaiton optimization.
+
+
+Changelog
+--------------------------------------------------------------------------------
+v1.0.0
+- Fix issue #1: EXIF header would be corrupted if rotating the JPEG image.
+- Support more EXIF information by porting metadata-extractor-2.3.1 source.
+- Remove Picasa thread and support.
+
+--------------------------------------------------------------------------------
