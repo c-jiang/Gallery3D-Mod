@@ -26,12 +26,14 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.WindowManager;
+import android.content.pm.PackageManager;
 
 import com.cooliris.app.App;
 import com.cooliris.media.Vector3f;
 
 public final class GridInputProcessor implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener,
         ScaleGestureDetector.OnScaleGestureListener {
+    private MotionEvent mPrevEvent;
     private int mCurrentFocusSlot;
     private boolean mCurrentFocusIsPressed;
     private int mCurrentSelectedSlot;
@@ -65,6 +67,12 @@ public final class GridInputProcessor implements GestureDetector.OnGestureListen
     private boolean mZoomGesture;
     private int mCurrentScaleSlot;
     private float mScale;
+    // Added for supporting moving pinch zoom center
+    private float mPrevFocusX;
+    private float mPrevFocusY;
+    private float mFocusX;
+    private float mFocusY;
+    private boolean mSupportPanAndZoom;
 
     public GridInputProcessor(Context context, GridCamera camera, GridLayer layer, RenderView view, Pool<Vector3f> pool,
             DisplayItem[] displayItems) {
@@ -81,6 +89,8 @@ public final class GridInputProcessor implements GestureDetector.OnGestureListen
         mGestureDetector.setIsLongpressEnabled(true);
         mZoomGesture = false;
         mScale = 1.0f;
+        mSupportPanAndZoom = context.getPackageManager().hasSystemFeature(
+            PackageManager.FEATURE_TOUCHSCREEN_MULTITOUCH_DISTINCT);
         {
             WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
             mDisplay = windowManager.getDefaultDisplay();
@@ -167,6 +177,18 @@ public final class GridInputProcessor implements GestureDetector.OnGestureListen
         mPrevTouchTime = timestamp;
         float timeElapsed = (float) delta;
         timeElapsed = timeElapsed * 0.001f; // division by 1000 for seconds
+
+        if (!mScaleGestureDetector.isInProgress()
+                    && (mActionCode == MotionEvent.ACTION_POINTER_1_DOWN ||
+                            mActionCode == MotionEvent.ACTION_POINTER_2_DOWN)
+                    && event.getPointerCount() >= 2) {
+                if (mPrevEvent != null) {
+                    mPrevEvent.recycle();
+                }
+                mPrevEvent = MotionEvent.obtain(event);
+                setPrevFocus(event);
+        }
+
         switch (mActionCode) {
         case MotionEvent.ACTION_UP:
             touchEnded(mTouchPosX, mTouchPosY, timeElapsed);
@@ -177,6 +199,7 @@ public final class GridInputProcessor implements GestureDetector.OnGestureListen
             break;
         case MotionEvent.ACTION_MOVE:
             touchMoved(mTouchPosX, mTouchPosY, timeElapsed);
+            setPrevFocus(event);
             break;
         }
         if (!mZoomGesture)
@@ -299,6 +322,43 @@ public final class GridInputProcessor implements GestureDetector.OnGestureListen
             }
         }
         return false;
+    }
+    private void setPrevFocus(MotionEvent event){
+
+        if(mPrevEvent == null) {
+            mPrevEvent  = MotionEvent.obtain(event);
+        }
+        final MotionEvent prev = mPrevEvent;
+
+        final float px0 = prev.getX(0);
+        final float py0 = prev.getY(0);
+        final float px1 = prev.getX(1);
+        final float py1 = prev.getY(1);
+        final float cx0 = event.getX(0);
+        final float cy0 = event.getY(0);
+        final float cx1 = event.getX(1);
+        final float cy1 = event.getY(1);
+
+        final float pvx = px1 - px0;
+        final float pvy = py1 - py0;
+        final float cvx = cx1 - cx0;
+        final float cvy = cy1 - cy0;
+
+        // Added for supporting moving pinch zoom center
+        mPrevFocusX = mFocusX;
+        mPrevFocusY = mFocusY;
+
+        mFocusX = cx0 + cvx * 0.5f;
+        mFocusY = cy0 + cvy * 0.5f;
+
+    }
+    // Added for supporting moving pinch zoom center
+    public float getPrevFocusX() {
+        return mPrevFocusX;
+    }
+
+    public float getPrevFocusY() {
+        return mPrevFocusY;
     }
 
     private void touchBegan(int posX, int posY) {
@@ -758,7 +818,7 @@ public final class GridInputProcessor implements GestureDetector.OnGestureListen
             return true;
         mScale = scale * mScale;
         boolean performTranslation = true;
-        if (layer.getState() == GridLayer.STATE_FULL_SCREEN) {
+        if (mSupportPanAndZoom && layer.getState() == GridLayer.STATE_FULL_SCREEN) {
             float currentScale = layer.getZoomValue();
             if (currentScale <= 1.0f)
                 performTranslation = false;
@@ -773,16 +833,14 @@ public final class GridInputProcessor implements GestureDetector.OnGestureListen
                 mCamera.convertToRelativeCameraSpace(posX, posY, 0, retVal);
                 mCamera.convertToRelativeCameraSpace(0, 0, 0, retValCenter);
 
-                // For support two-finger panning
-                float posPrevX = detector.getPrevFocusX();
-                float posPrevY = detector.getPrevFocusY();
+                float posPrevX = getPrevFocusX();
+                float posPrevY = getPrevFocusY();
+
                 posPrevX -= (mCamera.mWidth / 2);
                 posPrevY -= (mCamera.mHeight / 2);
                 mCamera.convertToRelativeCameraSpace(posPrevX, posPrevY, 0, retValPrev);
-            }
-            if (performTranslation) {
-                float posX = detector.getFocusX();
-                float posY = detector.getFocusY();
+                posX = detector.getFocusX();
+                posY = detector.getFocusY();
                 posX -= (mCamera.mWidth / 2);
                 posY -= (mCamera.mHeight / 2);
                 mCamera.convertToRelativeCameraSpace(posX, posY, 0, retVal);
@@ -800,7 +858,6 @@ public final class GridInputProcessor implements GestureDetector.OnGestureListen
                 retVal.x= (retVal.x - retValCenter.x)*(1.0f-1.0f/scale) + (retValPrev.x-retVal.x);
                 retVal.y= (retVal.y - retValCenter.y)*(1.0f-1.0f/scale) + (retValPrev.y-retVal.y);
                 mCamera.moveBy(retVal.x, retVal.y, 0);
-                //layer.constrainCameraForSlot(mCurrentSelectedSlot);
             }
         }
         if (mLayer.getState() == GridLayer.STATE_GRID_VIEW) {

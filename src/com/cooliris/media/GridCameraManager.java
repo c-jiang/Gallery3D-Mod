@@ -110,7 +110,8 @@ public final class GridCameraManager {
                     camera.mConvergenceSpeed = 2.0f;
                     camera.mFriction = 0.0f;
                     if ((bottomRight.x - topLeft.x) > (imgBottomRight.x - imgTopLeft.x)) {
-                        final float hCenterExtent= (bottomRight.x + topLeft.x)/2 - (imgBottomRight.x + imgTopLeft.x)/2;
+                        final float hCenterExtent= (bottomRight.x + topLeft.x)/2 -
+                            (imgBottomRight.x + imgTopLeft.x)/2;
                         camera.moveBy(-hCenterExtent, 0, 0);
                     } else {
                         float leftExtent = topLeft.x - imgTopLeft.x;
@@ -125,7 +126,8 @@ public final class GridCameraManager {
                         }
                     }
                     if ((bottomRight.y - topLeft.y) > (imgBottomRight.y - imgTopLeft.y)) {
-                        final float vCenterExtent= (bottomRight.y + topLeft.y)/2 - (imgBottomRight.y + imgTopLeft.y)/2;
+                        final float vCenterExtent= (bottomRight.y + topLeft.y)/2 -
+                            (imgBottomRight.y + imgTopLeft.y)/2;
                         camera.moveBy(0, -vCenterExtent, 0);
                     } else {
                         float topExtent = topLeft.y - imgTopLeft.y;
